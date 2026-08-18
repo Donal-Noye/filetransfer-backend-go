@@ -1,0 +1,8 @@
+services:
+  fileshare:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./temp-images:/app/temp-images
+      - ./data:/app/data

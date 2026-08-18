@@ -1,0 +1,143 @@
+basePath: /
+definitions:
+  httpapi.DownloadLink:
+    properties:
+      link:
+        type: string
+      name:
+        type: string
+    type: object
+  httpapi.ExpiryOptions:
+    properties:
+      key:
+        type: string
+      label:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Простой файлообменник с ограниченным сроком жизни файлов
+  title: FileShare API
+  version: "1.0"
+paths:
+  /batch/{id}:
+    get:
+      parameters:
+      - description: ID батча
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/httpapi.DownloadLink'
+            type: array
+        "404":
+          description: not found
+          schema:
+            type: string
+      summary: Получить список файлов батча
+      tags:
+      - batch
+  /batch/{id}/zip:
+    get:
+      description: Архивирует все ещё не истёкшие файлы батча в zip и стримит его
+        в ответ
+      parameters:
+      - description: ID батча
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/zip
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "404":
+          description: batch not found
+          schema:
+            type: string
+      summary: Скачать все файлы батча архивом
+      tags:
+      - batch
+  /files/{id}:
+    get:
+      parameters:
+      - description: ID файла
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "404":
+          description: not found
+          schema:
+            type: string
+        "410":
+          description: expired
+          schema:
+            type: string
+      summary: Скачать файл
+      tags:
+      - files
+  /options:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/httpapi.ExpiryOptions'
+            type: array
+      summary: Получить доступные варианты срока хранения
+      tags:
+      - options
+  /upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Загружает один или несколько файлов и возвращает ссылку на батч
+      parameters:
+      - description: Файлы для загрузки
+        in: formData
+        name: myFile
+        required: true
+        type: file
+      - description: Срок хранения (20s, 1d, 3d, 7d)
+        in: formData
+        name: expires
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: bad request
+          schema:
+            type: string
+      summary: Загрузить файлы
+      tags:
+      - files
+swagger: "2.0"
